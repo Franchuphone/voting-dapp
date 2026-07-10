@@ -1,9 +1,19 @@
+/**
+ * @file Integration tests for the `Voting` contract.
+ * @summary Exercises the full workflow (voter registration → proposals → voting →
+ *   tally) plus the hardening guards: unbounded-gas DoS resistance, duplicate-proposal
+ *   rejection, deterministic tie-breaking, and the zero-address / no-proposal / no-vote
+ *   guards. Runs on `node:test` and drives the contract through viem clients.
+ */
 import { describe, it, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { network } from "hardhat";
+import { getAddress } from "viem";
 
+/** In-process Hardhat network connection exposing the viem helpers. */
 const { viem } = await network.create();
 
+/** Mirror of the contract's `WorkflowStatus` enum (values must match on-chain order). */
 enum WorkflowStatus {
   RegisteringVoters,
   ProposalsRegistrationStarted,
@@ -13,6 +23,11 @@ enum WorkflowStatus {
   VotesTallied,
 }
 
+/**
+ * Deploys a fresh `Voting` contract and returns it alongside the wallet clients used
+ * throughout the suite (deployer is the owner).
+ * @returns The deployed contract and the owner / three voters / a non-voter clients.
+ */
 async function setUpSmartContract() {
   const [owner, voter1, voter2, voter3, nonVoter] =
     await viem.getWalletClients();
@@ -20,6 +35,7 @@ async function setUpSmartContract() {
   return { votingContract, owner, voter1, voter2, voter3, nonVoter };
 }
 
+/** Resolved shape of {@link setUpSmartContract}, used to type the shared fixtures. */
 type Deployed = Awaited<ReturnType<typeof setUpSmartContract>>;
 
 describe("Voting Contract", () => {
@@ -30,14 +46,21 @@ describe("Voting Contract", () => {
   let voter3: Deployed["voter3"];
   let nonVoter: Deployed["nonVoter"];
 
-  ///// SET UP TO TEST PROPOSAL PHASE /////
+  /**
+   * Registers three voters and opens the proposals-registration phase.
+   * Leaves the workflow in `ProposalsRegistrationStarted`.
+   */
   async function AddThreeVotersAndStartsProposalRegistration() {
     await votingContract.write.addVoter([voter1.account.address]);
     await votingContract.write.addVoter([voter2.account.address]);
     await votingContract.write.addVoter([voter3.account.address]);
     await votingContract.write.startProposalsRegistering();
   }
-  ///// SET UP TO TEST VOTING PHASE   /////
+  /**
+   * Builds on the previous helper: adds four real proposals (indices 1–4, since 0 is the
+   * BLANK VOTE), closes registration and opens voting.
+   * Leaves the workflow in `VotingSessionStarted`.
+   */
   async function AddFourProposalsAndStartsVotingSession() {
     await AddThreeVotersAndStartsProposalRegistration();
     await votingContract.write.addProposal(["Proposal A"], {
@@ -55,7 +78,11 @@ describe("Voting Contract", () => {
     await votingContract.write.endProposalsRegistering();
     await votingContract.write.startVotingSession();
   }
-  ///// SET UP TO TEST TALLY PHASE    /////
+  /**
+   * Full setup through the end of voting: two votes for proposal 1, one for proposal 2,
+   * then closes the session. Leaves the workflow in `VotingSessionEnded`, ready to tally
+   * (expected winner: proposal 1).
+   */
   async function fullSetup() {
     await AddFourProposalsAndStartsVotingSession();
     await votingContract.write.setVote([1n], { account: voter1.account });
@@ -75,7 +102,10 @@ describe("Voting Contract", () => {
 
   describe("Initial deployment", () => {
     it("Should set the right owner", async () => {
-      assert.equal(await votingContract.read.owner(), owner.account.address);
+      assert.equal(
+        getAddress(await votingContract.read.owner()),
+        getAddress(owner.account.address),
+      );
     });
 
     it("Should start in RegisteringVoters status", async () => {
@@ -122,7 +152,7 @@ describe("Voting Contract", () => {
       const proposal = await votingContract.read.getOneProposal([0n], {
         account: voter1.account,
       });
-      assert.equal(proposal.description, "GENESIS");
+      assert.equal(proposal.description, "BLANK VOTE");
       assert.equal(proposal.voteCount, 0n);
     });
 
@@ -134,7 +164,7 @@ describe("Voting Contract", () => {
     });
 
     it("Should revert getOneProposal on non existing id", async () => {
-      // ONLY GENESIS EXISTS AT INDEX 0
+      // ONLY BLANK VOTE EXISTS AT INDEX 0
       await viem.assertions.revert(
         votingContract.read.getOneProposal([99n], { account: voter1.account }),
       );
@@ -199,13 +229,13 @@ describe("Voting Contract", () => {
         );
       });
 
-      it("Should initialize GENESIS proposal at index 0", async () => {
+      it("Should initialize BLANK VOTE proposal at index 0", async () => {
         await AddThreeVotersAndStartsProposalRegistration();
-        const genesis = await votingContract.read.getOneProposal([0n], {
+        const blankVote = await votingContract.read.getOneProposal([0n], {
           account: voter1.account,
         });
-        assert.equal(genesis.description, "GENESIS");
-        assert.equal(genesis.voteCount, 0n);
+        assert.equal(blankVote.description, "BLANK VOTE");
+        assert.equal(blankVote.voteCount, 0n);
       });
     });
 
@@ -213,7 +243,11 @@ describe("Voting Contract", () => {
 
     describe("endProposalsRegistering", () => {
       beforeEach(async () => {
-        await votingContract.write.startProposalsRegistering();
+        await AddThreeVotersAndStartsProposalRegistration();
+        // at least one real proposal is required to end registration
+        await votingContract.write.addProposal(["Proposal A"], {
+          account: voter1.account,
+        });
       });
 
       it("Should update status to endProposalsRegistering", async () => {
@@ -257,6 +291,18 @@ describe("Voting Contract", () => {
           "Registering proposals havent started yet",
         );
       });
+
+      it("Should revert endProposalsRegistering if no real proposal was registered", async () => {
+        // fresh session with voters + open registration but no real proposal
+        const { votingContract: emptyVoting, voter1: v1 } =
+          await setUpSmartContract();
+        await emptyVoting.write.addVoter([v1.account.address]);
+        await emptyVoting.write.startProposalsRegistering();
+        await viem.assertions.revertWith(
+          emptyVoting.write.endProposalsRegistering(),
+          "No proposal registered",
+        );
+      });
     });
 
     //////// START VOTING SESSION /////////
@@ -264,6 +310,10 @@ describe("Voting Contract", () => {
     describe("startVotingSession", () => {
       beforeEach(async () => {
         await AddThreeVotersAndStartsProposalRegistration();
+        // at least one real proposal is required to end registration
+        await votingContract.write.addProposal(["Proposal A"], {
+          account: voter1.account,
+        });
         await votingContract.write.endProposalsRegistering();
       });
 
@@ -313,6 +363,8 @@ describe("Voting Contract", () => {
     describe("endVotingSession", () => {
       beforeEach(async () => {
         await AddFourProposalsAndStartsVotingSession();
+        // at least one vote is required to end the voting session
+        await votingContract.write.setVote([1n], { account: voter1.account });
       });
 
       it("Should update status to VotingSessionEnded", async () => {
@@ -352,6 +404,29 @@ describe("Voting Contract", () => {
         await viem.assertions.revertWith(
           votingContract.write.endVotingSession(),
           "Voting session havent started yet",
+        );
+      });
+
+      it("Should revert endVotingSession if no vote has been cast", async () => {
+        // fresh session opened for voting but with zero votes cast
+        const {
+          votingContract: noVotes,
+          voter1: v1,
+          voter2: v2,
+          voter3: v3,
+        } = await setUpSmartContract();
+        await noVotes.write.addVoter([v1.account.address]);
+        await noVotes.write.addVoter([v2.account.address]);
+        await noVotes.write.addVoter([v3.account.address]);
+        await noVotes.write.startProposalsRegistering();
+        await noVotes.write.addProposal(["Proposal A"], {
+          account: v1.account,
+        });
+        await noVotes.write.endProposalsRegistering();
+        await noVotes.write.startVotingSession();
+        await viem.assertions.revertWith(
+          noVotes.write.endVotingSession(),
+          "No vote has been cast",
         );
       });
     });
@@ -399,6 +474,15 @@ describe("Voting Contract", () => {
       await viem.assertions.revertWith(
         votingContract.write.addVoter([voter1.account.address]),
         "Voters registration is not open yet",
+      );
+    });
+
+    it("Should revert when adding the zero address as a voter", async () => {
+      await viem.assertions.revertWith(
+        votingContract.write.addVoter([
+          "0x0000000000000000000000000000000000000000",
+        ]),
+        "Zero address cannot be a voter",
       );
     });
 
@@ -468,6 +552,10 @@ describe("Voting Contract", () => {
     });
 
     it("Should revert if workflow status is not ProposalsRegistration", async () => {
+      // a real proposal is required before registration can be ended
+      await votingContract.write.addProposal(["Proposal A"], {
+        account: voter1.account,
+      });
       await votingContract.write.endProposalsRegistering();
       await viem.assertions.revertWith(
         votingContract.write.addProposal(["Bad Proposal"], {
@@ -480,7 +568,20 @@ describe("Voting Contract", () => {
     it("Should revert on empty proposal", async () => {
       await viem.assertions.revertWith(
         votingContract.write.addProposal([""], { account: voter1.account }),
-        "Vous ne pouvez pas ne rien proposer",
+        "Empty proposal is not allowed",
+      );
+    });
+
+    it("Should revert on duplicate proposal", async () => {
+      await votingContract.write.addProposal(["Proposal A"], {
+        account: voter1.account,
+      });
+      // Same description again — even from a different voter — must be rejected
+      await viem.assertions.revertWith(
+        votingContract.write.addProposal(["Proposal A"], {
+          account: voter2.account,
+        }),
+        "Proposal already exists",
       );
     });
 
@@ -553,6 +654,9 @@ describe("Voting Contract", () => {
     });
 
     it("Should revert if workflow status is not VotingSessionStarted", async () => {
+      // a vote is required so the session can be ended (status check runs first
+      // in setVote, so voter1 still hits the status revert below)
+      await votingContract.write.setVote([1n], { account: voter1.account });
       await votingContract.write.endVotingSession();
       await viem.assertions.revertWith(
         votingContract.write.setVote([1n], { account: voter1.account }),
@@ -632,6 +736,18 @@ describe("Voting Contract", () => {
       assert.equal(await votingContract.read.winningProposalID(), 1n);
     });
 
+    it("Should keep lowest index on tie regardless of vote order", async () => {
+      // Votes arrive in REVERSE index order (2 before 1) but the tie must still
+      // resolve to the lowest index (1) — guards against order-dependent tallying.
+      await AddFourProposalsAndStartsVotingSession();
+      await votingContract.write.setVote([2n], { account: voter3.account });
+      await votingContract.write.setVote([1n], { account: voter1.account });
+      await votingContract.write.endVotingSession();
+      await votingContract.write.tallyVotes();
+
+      assert.equal(await votingContract.read.winningProposalID(), 1n);
+    });
+
     it(
       "Crash test of tallyVotes on incremented number of proposals",
       // PUSH TIMEOUT DURATION TO AVOID BLOCKING EXECUTION
@@ -662,7 +778,9 @@ describe("Voting Contract", () => {
             const receipt = await publicClient.waitForTransactionReceipt({
               hash,
             });
-            console.log(`  ✓ ${size} proposals | gas used : ${receipt.gasUsed}`);
+            console.log(
+              `  ✓ ${size} proposals | gas used : ${receipt.gasUsed}`,
+            );
             assert.equal(await votingContract.read.winningProposalID(), 1n);
           } catch (err) {
             console.log(

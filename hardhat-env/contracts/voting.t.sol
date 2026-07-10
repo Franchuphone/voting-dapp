@@ -84,7 +84,7 @@ contract VotingTest is Test {
     /// @notice A VOTE FOR AN OUT OF BOND PROPOSAL ID ALWAYS REVERTS
     function testFuzz_voteOutOfBoundsReverts(uint256 proposalId) public {
         _addFourProposalsAndStartVoting();
-        // 4 proposals + GENESIS = index 0..4
+        // 4 proposals + BLANK VOTE = index 0..4
         vm.assume(proposalId > 4);
         vm.prank(voter1);
         vm.expectRevert("Proposal not found");
@@ -103,7 +103,7 @@ contract VotingTest is Test {
         uint8 v3Vote
     ) public {
         _addFourProposalsAndStartVoting();
-        // 4 proposals (GENESIS + A + B + C), indices 0..3
+        // 4 proposals (BLANK VOTE + A + B + C), indices 0..3
         v1Vote = uint8(bound(v1Vote, 0, 3));
         v2Vote = uint8(bound(v2Vote, 0, 3));
         v3Vote = uint8(bound(v3Vote, 0, 3));
