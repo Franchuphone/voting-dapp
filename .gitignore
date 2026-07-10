@@ -1,0 +1,57 @@
+# ─── Dependencies ───────────────────────────────────────────────
+node_modules/
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# ─── Environment / secrets ──────────────────────────────────────
+# Never commit real keys — keep an .env.example with placeholders.
+.env
+.env.*
+!.env.example
+
+# ─── Hardhat / Solidity (hardhat-env) ───────────────────────────
+hardhat-env/artifacts/
+hardhat-env/cache/
+hardhat-env/types/
+hardhat-env/dist/
+hardhat-env/bundle/
+hardhat-env/coverage/
+hardhat-env/.gas-snapshot
+hardhat-env/snapshots/
+# Local Ignition deployment state (keep prod deployments if you track them)
+hardhat-env/ignition/deployments/chain-31337/
+
+# ─── Next.js (next-env) ─────────────────────────────────────────
+next-env/.next/
+next-env/out/
+next-env/build/
+next-env/.vercel
+next-env/next-env.d.ts
+next-env/coverage/
+
+# ─── TypeScript ─────────────────────────────────────────────────
+*.tsbuildinfo
+
+# ─── Logs ───────────────────────────────────────────────────────
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+logs/
+*.log
+
+# ─── Editor / OS ────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.pem
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# ─── Claude Code (local, machine-specific) ──────────────────────
+.claude/settings.local.json
