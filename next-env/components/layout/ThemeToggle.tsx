@@ -9,8 +9,8 @@ const ThemeToggle = () => {
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
-  // resolvedTheme is only known on the client, so wait until mounted to
-  // render the icon and avoid a server/client hydration mismatch.
+  // resolvedTheme is client-only; wait for mount to avoid a hydration mismatch.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setMounted(true), []);
 
   if (!mounted) {

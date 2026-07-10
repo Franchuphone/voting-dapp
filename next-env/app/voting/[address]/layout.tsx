@@ -1,8 +1,7 @@
 import type { ReactNode } from "react";
 import RoleGuard from "@/components/voting/RoleGuard";
 
-// Protects /voting/[address]: only the admin (owner) or a registered voter of
-// the contract may see the session; everyone else is redirected out.
+// Guards /voting/[address]: only the owner or a registered voter may enter.
 export default function VotingLayout({ children }: { children: ReactNode }) {
   return <RoleGuard>{children}</RoleGuard>;
 }

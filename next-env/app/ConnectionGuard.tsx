@@ -5,20 +5,15 @@ import { usePathname, useRouter } from "next/navigation";
 import { useConnection } from "wagmi";
 import NotConnectedHome from "../components/connection/NotConnectedHome";
 
-/**
- * Wallet-connection gate for every route
- * Wraps the whole app : while disconnected it shows a full-screen connect wall
- * Connected users get the full app.
- * Rendered once at the root
- */
+// Root wallet gate: disconnected users get a full-screen connect wall, connected users the app.
 export default function ConnectionGuard({ children }: { children: ReactNode }) {
   const { isConnected } = useConnection();
   const router = useRouter();
   const pathname = usePathname();
 
-  // Connection state is only known on the client
-  // Wait for it to avoid a hydration mismatch
+  // Connection state is client-only; wait for mount to avoid a hydration mismatch.
   const [mounted, setMounted] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setMounted(true), []);
 
   useEffect(() => {

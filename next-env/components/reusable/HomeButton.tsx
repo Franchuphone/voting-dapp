@@ -2,8 +2,7 @@
 
 import CustomButton from "./CustomButton";
 
-// Navigates back to the landing page. `className` styles the wrapper so each
-// page can place it (e.g. spanning a grid, spacing).
+// Link back to the landing page; `className` styles the wrapper for placement.
 const HomeButton = ({ className }: { className?: string }) => {
   return (
     <div className={className}>

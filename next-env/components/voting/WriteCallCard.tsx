@@ -13,7 +13,7 @@ import { toast } from "sonner";
 type WriteCallCardProps = {
   address: `0x${string}`;
   functionName: string;
-  args?: any;
+  args?: readonly unknown[];
   label: string;
   description: string;
   disabled?: boolean;
@@ -64,9 +64,10 @@ const WriteCallCard = ({
       toast.success(pattern ? toaster : "Transaction confirmed", {
         id: writeData,
       });
+      // Reset the input after a confirmed write (reaction to the tx event).
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (pattern) setValue("");
-      // Refetch all reads (workflowStatus, getVoter, …) so the UI reflects the
-      // new on-chain state after this write confirms.
+      // Refetch all reads so the UI reflects the new on-chain state after this write.
       queryClient.invalidateQueries();
     } else if (error) {
       toast.error(error.message ?? "Transaction aborted", {

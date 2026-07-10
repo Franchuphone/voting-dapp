@@ -1,5 +1,4 @@
 import { useVotingContext } from "@/components/voting/RoleGuard";
-import { votingAbi } from "@/constants/voting";
 import {
   Card,
   CardDescription,
@@ -7,7 +6,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Loader2Icon } from "lucide-react";
-import { useReadContract } from "wagmi";
 
 // Matches the WorkflowStatus enum order in voting.sol
 const WORKFLOW_STATUS_LABELS = [

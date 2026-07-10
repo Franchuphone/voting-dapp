@@ -3,15 +3,14 @@ import { type ReactNode } from "react";
 import { WagmiProvider, type Config } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { http } from "viem";
-import { createAppKit, useAppKitTheme } from "@reown/appkit/react";
+import { createAppKit } from "@reown/appkit/react";
 import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
 import { sepolia, hardhat } from "@reown/appkit/networks";
 
 const projectId = process.env.NEXT_PUBLIC_PROJECT_ID || "";
 const RPC = process.env.NEXT_PUBLIC_INFURA_SEPOLIA || "";
 
-// Origin used for the wallet metadata: the real deployed domain in the browser,
-// a localhost fallback during SSR. Set NEXT_PUBLIC_APP_URL to pin it explicitly.
+// Wallet-metadata origin: NEXT_PUBLIC_APP_URL, else the browser origin, else localhost.
 const appUrl =
   process.env.NEXT_PUBLIC_APP_URL ||
   (typeof window !== "undefined"
@@ -28,8 +27,7 @@ const wagmiAdapter = new WagmiAdapter({
   },
 });
 
-// Initialise AppKit once, at module scope — the modal is a global web component
-// appended to <body>, not a React provider.
+// Init AppKit once at module scope; its modal is a global web component on <body>.
 createAppKit({
   adapters: [wagmiAdapter],
   networks: [sepolia, hardhat],

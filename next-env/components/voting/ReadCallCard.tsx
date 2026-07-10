@@ -3,7 +3,7 @@
 import { votingAbi } from "@/constants/voting";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription } from "@/components/ui/card";
-import { Loader2Icon, SearchIcon, SendIcon } from "lucide-react";
+import { Loader2Icon, SendIcon } from "lucide-react";
 import { useConnection, useReadContract } from "wagmi";
 import { isAddress } from "viem";
 import { useRef, useState } from "react";
@@ -24,7 +24,7 @@ type ReadCallCardProps = {
   pattern?: RegExp;
 };
 
-// Read results can be a bigint or a struct flatten to a display string.
+// Flatten a read result (bigint or struct) into a display string.
 const formatReturnedData = (v: unknown): string => {
   let formattedData = "";
   if (v === undefined || v === null) return "";
@@ -55,10 +55,7 @@ const formatReturnedData = (v: unknown): string => {
   return formattedData;
 };
 
-/**
- * A single Voting read call rendered as a card: an input for the arg (address or
- * id) plus a button that fetches and shows the result in a dialog.
- */
+// A single Voting read call: an arg input plus a button that shows the result in a dialog.
 const ReadCallCard = ({
   address,
   functionName,

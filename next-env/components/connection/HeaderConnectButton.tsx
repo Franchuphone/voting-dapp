@@ -4,11 +4,7 @@ import WalletButton from "./WalletButton";
 import { useConnection } from "wagmi";
 import { cn } from "@/lib/utils";
 
-/**
- * The header connect/account button. Stays invisible while disconnected and
- * fades in (after a short delay) once connected, so it only appears as the
- * traveling NotConnected button slides up into its spot.
- */
+// Header account button: hidden while disconnected, fades in after connecting.
 export default function HeaderConnectButton() {
   const { isConnected } = useConnection();
 

@@ -16,7 +16,7 @@ type VotingContext = {
 
 const VotingContext = createContext<VotingContext | null>(null);
 
-/** Read the current user's roles for this voting session. RoleGuard-only. */
+// Current user's roles for this voting session; usable only inside RoleGuard.
 export function useVotingContext() {
   const role = useContext(VotingContext);
   if (!role)
@@ -24,12 +24,7 @@ export function useVotingContext() {
   return role;
 }
 
-/**
- * Role gate for a single voting route (/voting/[address]).
- * ConnectionGuard already ensures the wallet is connected; this additionally
- * blocks connected users who are neither the admin (owner) nor a registered
- * voter of the voting contract in the URL, sending them back to the dashboard.
- */
+// Role gate for /voting/[address]: non owner/voter users are sent back to the dashboard.
 export default function RoleGuard({ children }: { children: ReactNode }) {
   const { address: connected } = useConnection();
   const { address: contractParam } = useParams<{ address: string }>();
@@ -43,7 +38,7 @@ export default function RoleGuard({ children }: { children: ReactNode }) {
     functionName: "workflowStatus",
   });
 
-  // Admin: the Voting contract is Ownable, so owner() is the creator/admin.
+  // Admin = owner() (the Voting contract is Ownable).
   const { data: owner, isLoading: ownerLoading } = useReadContract({
     address: contractAddress,
     abi: votingAbi,
@@ -54,8 +49,7 @@ export default function RoleGuard({ children }: { children: ReactNode }) {
   const isAdmin =
     !!owner && !!connected && owner.toLowerCase() === connected.toLowerCase();
 
-  // Voter: getVoter is onlyVoters-gated, so calling it as `connected` succeeds
-  // only for a registered voter. retry:false so a revert fails fast.
+  // Voter = getVoter (onlyVoters) succeeds when called as `connected`; retry:false fails fast.
   const { isSuccess: isVoter, isLoading: voterLoading } = useReadContract({
     address: contractAddress,
     abi: votingAbi,

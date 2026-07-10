@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 const truncate = (addr?: string) =>
   addr ? `${addr.slice(0, 6)} . . .${addr.slice(-4)}` : "";
 
-// Wei (bigint) -> ETH string, trimmed to 4 decimals without trailing zeros
+// Wei -> ETH string, 4 decimals, no trailing zeros.
 const formatEth = (wei: bigint) =>
   Number(formatEther(wei))
     .toFixed(4)
@@ -32,8 +32,7 @@ export default function WalletButton() {
     );
   }
 
-  // Network switcher (opens AppKit) + balance — shown as the row on wide screens
-  // and stacked inside the dropdown on narrow ones.
+  // Network switcher (opens AppKit) + balance: a row on wide screens, stacked in the dropdown on narrow.
   const details = (
     <>
       <WalletButtonTemplate

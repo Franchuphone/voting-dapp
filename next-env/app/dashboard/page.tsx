@@ -16,10 +16,7 @@ type VotingLog = NonNullable<
 
 type SessionStatus = "loading" | "role" | "none";
 
-// One hook instance per session so getVoter can be called with `account: address`
-// (i.e. from = address). getVoter is guarded by onlyVoters, which checks
-// msg.sender, so a successful read means `address` is a registered voter here.
-// Renders nothing when the user has no role on this session.
+// One card per session: a successful onlyVoters getVoter (from = address) means a voter; renders nothing without a role.
 const SessionCard = ({
   log,
   address,
@@ -46,8 +43,7 @@ const SessionCard = ({
   if (isVoter) roles.push("Voter");
 
   const hasRole = roles.length > 0;
-  // Still "loading" until the voter read settles, so the parent doesn't flash
-  // the empty state before we know whether this session is accessible.
+  // Stay "loading" until the voter read settles so the parent doesn't flash the empty state.
   const status: SessionStatus = hasRole
     ? "role"
     : isLoading
@@ -80,8 +76,7 @@ const Dashboard = () => {
   });
   const { address } = useConnection();
 
-  // Per-session status reported by each card; keyed so it stays correct as
-  // roles/reads change instead of latching.
+  // Per-session status keyed by tx hash, so it updates with roles/reads instead of latching.
   const [statuses, setStatuses] = useState<Record<string, SessionStatus>>({});
   const handleStatusChange = useCallback(
     (key: string, status: SessionStatus) => {
@@ -100,10 +95,9 @@ const Dashboard = () => {
   const anyAccessible = logs.some(
     (log) => statuses[log.transactionHash ?? ""] === "role",
   );
-  // Only show once events are loaded and every card has settled with no role,
-  // so accessible users never see a flash.
+  // Empty state only once events loaded and all cards settled roleless, so no flash.
   const showEmpty = !eventLogs.isLoading && settled && !anyAccessible;
-  // In between: still resolving and nothing accessible to render yet.
+  // Otherwise still resolving with nothing accessible yet.
   const showLoading = !showEmpty && !anyAccessible;
 
   return (

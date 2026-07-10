@@ -2,9 +2,7 @@
 import { CheckCircle2, CircleX, Loader2, Send } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "../ui/alert";
 import { useWaitForTransactionReceipt } from "wagmi";
-import { Button } from "../ui/button";
 import { BaseError, parseEventLogs } from "viem";
-import { useRouter } from "next/navigation";
 import CustomButton from "../reusable/CustomButton";
 import { votingFactoryConfig } from "@/constants/votingFactory";
 
@@ -25,8 +23,7 @@ const BlockchainSubmit = ({
   } = useWaitForTransactionReceipt({ hash });
   const error = submitError ?? receiptError;
 
-  // The new Voting address isn't in receipt.contractAddress (this is a factory
-  // *call*, not a deploy) — pull it from the VotingCreated event.
+  // Factory call, not a deploy: read the new Voting address from the VotingCreated event.
   const created =
     isSuccess && receipt
       ? parseEventLogs({
