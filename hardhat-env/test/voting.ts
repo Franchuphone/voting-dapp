@@ -188,6 +188,8 @@ describe("Voting Contract", () => {
 
     describe("startProposalsRegistering", () => {
       it("Should update status to ProposalsRegistrationStarted", async () => {
+        // at least one registered voter is required to open proposals
+        await votingContract.write.addVoter([voter1.account.address]);
         await votingContract.write.startProposalsRegistering();
         assert.equal(
           await votingContract.read.workflowStatus(),
@@ -196,6 +198,7 @@ describe("Voting Contract", () => {
       });
 
       it("Should emit event with correct args on startProposalsRegistering", async () => {
+        await votingContract.write.addVoter([voter1.account.address]);
         await viem.assertions.emitWithArgs(
           votingContract.write.startProposalsRegistering(),
           votingContract,
@@ -218,6 +221,7 @@ describe("Voting Contract", () => {
       });
 
       it("Should revert startProposalsRegistering if not in RegisteringVoters status", async () => {
+        await votingContract.write.addVoter([voter1.account.address]);
         assert.equal(
           await votingContract.read.workflowStatus(),
           WorkflowStatus.RegisteringVoters,
@@ -226,6 +230,14 @@ describe("Voting Contract", () => {
         await viem.assertions.revertWith(
           votingContract.write.startProposalsRegistering(),
           "Registering proposals cant be started now",
+        );
+      });
+
+      it("Should revert startProposalsRegistering if no voter is registered", async () => {
+        // no addVoter call: opening proposals with zero voters must revert
+        await viem.assertions.revertWith(
+          votingContract.write.startProposalsRegistering(),
+          "No voter registered",
         );
       });
 
@@ -470,6 +482,8 @@ describe("Voting Contract", () => {
 
     it("Should revert if workflow status is not RegisteringVoters", async () => {
       // WORKFLOW NEEDS TO BE CHANGED TO TEST THIS ONE
+      // a voter is required so proposals can be opened (moves us out of RegisteringVoters)
+      await votingContract.write.addVoter([voter2.account.address]);
       await votingContract.write.startProposalsRegistering();
       await viem.assertions.revertWith(
         votingContract.write.addVoter([voter1.account.address]),

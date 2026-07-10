@@ -17,10 +17,13 @@ contract Voting is Ownable {
     /// @notice Index (into `proposalsArray`) of the current leading / winning proposal.
     /// @dev Maintained incrementally during voting; only final once `workflowStatus`
     ///      reaches `VotesTallied`. Defaults to 0 (the BLANK VOTE option).
-    uint public winningProposalID;
+    uint64 public winningProposalID;
 
     /// @notice Total number of votes cast across the whole session.
-    uint public totalVotes;
+    uint96 public totalVotes;
+
+    /// @notice Total number of registered voters.
+    uint96 public totalVoters;
 
     /// @notice A registered participant of the vote.
     /// @param isRegistered    Whether the address may participate.
@@ -115,6 +118,7 @@ contract Voting is Ownable {
         require(voters[_addr].isRegistered != true, 'Already registered');
 
         voters[_addr].isRegistered = true;
+        totalVoters++;
         emit VoterRegistered(_addr);
     }
 
@@ -160,7 +164,7 @@ contract Voting is Ownable {
         uint _leadCount = proposalsArray[winningProposalID].voteCount;
         uint _newCount = proposalsArray[_id].voteCount;
         if (_newCount > _leadCount || (_newCount == _leadCount && _id < winningProposalID)) {
-            winningProposalID = _id;
+            winningProposalID = uint64(_id);
         }
 
         emit Voted(msg.sender, _id);
@@ -170,10 +174,12 @@ contract Voting is Ownable {
 
 
     /// @notice Opens the proposals-registration phase and seeds the BLANK VOTE option.
-    /// @dev Owner-only; allowed only from `RegisteringVoters`. Pushes "BLANK VOTE" at
-    ///      index 0 and reserves its hash so it cannot be registered again.
+    /// @dev Owner-only; allowed only from `RegisteringVoters`. Requires at least one
+    ///      registered voter. Pushes "BLANK VOTE" at index 0 and reserves its hash so
+    ///      it cannot be registered again.
     function startProposalsRegistering() external onlyOwner {
         require(workflowStatus == WorkflowStatus.RegisteringVoters, 'Registering proposals cant be started now');
+        require(totalVoters > 0, 'No voter registered');
         workflowStatus = WorkflowStatus.ProposalsRegistrationStarted;
 
         // Seed index 0 as the "blank vote" (abstention) option and reserve its hash
