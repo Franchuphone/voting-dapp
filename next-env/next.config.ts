@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Turbopack is the default builder in Next 16; empty config acknowledges it so the
+  // webpack block below (used only with `next dev/build --webpack`) doesn't error.
+  turbopack: {},
   webpack: (config) => {
     // Silence benign "module not found" warnings for optional deps that wallet
     // SDKs reference but a web app never uses:
