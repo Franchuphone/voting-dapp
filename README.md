@@ -105,7 +105,7 @@ Deploys `Voting` contracts on demand and keeps an on-chain registry:
 ### Prerequisites
 
 - [Node.js](https://nodejs.org) 20+
-- [pnpm](https://pnpm.io) (both workspaces use pnpm lockfiles)
+- [pnpm](https://pnpm.io)
 
 ### 1. Contracts (`hardhat-env/`)
 
@@ -159,7 +159,7 @@ pnpm dev:turbo    # Turbopack variant
 | Variable                                    | Description                                                   |
 | ------------------------------------------- | ------------------------------------------------------------- |
 | `NEXT_PUBLIC_PROJECT_ID`                    | [Reown / WalletConnect](https://cloud.reown.com) project ID   |
-| `NEXT_PUBLIC_INFURA_SEPOLIA`                | Sepolia RPC URL (Infura, Alchemy, …)                          |
+| `NEXT_PUBLIC_INFURA_SEPOLIA`                | Sepolia RPC Infura URL                                        |
 | `NEXT_PUBLIC_VOTING_FACTORY_ADDRESS`        | Deployed `VotingFactory` address for the target network       |
 | `NEXT_PUBLIC_VOTING_FACTORY_DEPLOYED_BLOCK` | Block the factory was deployed at (bounds the `getLogs` scan) |
 | `NEXT_PUBLIC_APP_URL`                       | (optional) Pins the wallet-metadata origin                    |
@@ -172,7 +172,7 @@ pnpm dev:turbo    # Turbopack variant
 ## How the app works
 
 1. **Connection guard** keeps all app restricted behind a wallet connection mandatory
-2. **Connect a wallet** via the Reown AppKit modal (Sepolia + local Hardhat networks) button on the homepage
+2. **Connect a wallet** via the Reown AppKit modal (Sepolia network) button on the homepage
 3. **New voting session** calls `VotingFactory.createVoting(name)`; you become its owner
 4. **Dashboard** lists every session from the factory's `VotingCreated` where connected wallet has a role (Admin or voter),
    keeps the others "private"
