@@ -1,8 +1,11 @@
+import ThemeToggle from "./ThemeToggle";
+
 const GITHUB_URL = "https://github.com/Franchuphone/voting-dapp";
 
 const Footer = () => {
   return (
     <footer className="footer">
+      <ThemeToggle />
       <a
         href={GITHUB_URL}
         target="blank"

@@ -216,7 +216,7 @@
 }
 
 .navbar {
-  @apply flex-between p-10;
+  @apply flex-between px-6 py-10;
 }
 
 .main {
@@ -228,7 +228,7 @@
 }
 
 .footer {
-  @apply w-full flex justify-end p-6;
+  @apply w-full flex justify-between items-end p-6;
 }
 
 @utility flex-between {

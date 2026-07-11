@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Vote } from "lucide-react";
 import HeaderConnectButton from "../connection/HeaderConnectButton";
-import ThemeToggle from "./ThemeToggle";
 
 const Header = () => {
   return (
@@ -13,7 +12,6 @@ const Header = () => {
       </div>
       <div className="flex items-center gap-3">
         <HeaderConnectButton />
-        <ThemeToggle />
       </div>
     </nav>
   );

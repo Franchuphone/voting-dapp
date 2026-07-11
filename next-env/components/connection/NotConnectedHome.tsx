@@ -8,7 +8,7 @@ export default function NotConnectedHome({
 }) {
   return (
     <div className="flex-col-center">
-      <h1 className="text-4xl font-bold mb-10">
+      <h1 className="text-4xl font-bold mb-10 max-[800px]:text-center">
         Welcome to your voting platform
       </h1>
       {/* On connect, `leaving` triggers the slide-up-then-right + fade toward
