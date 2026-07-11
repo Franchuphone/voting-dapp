@@ -171,12 +171,15 @@ pnpm dev:turbo    # Turbopack variant
 
 ## How the app works
 
-1. **Connect a wallet** via the Reown AppKit modal (Sepolia + local Hardhat networks).
-2. **Create a voting session** — calls `VotingFactory.createVoting(name)`; you become its owner.
-3. **Dashboard** lists every session from the factory's `VotingCreated` events and shows
-   your role (owner / voter) per session.
-4. **Run the workflow** — register voters, open proposals, vote, and tally, each step
-   gated by the contract's `WorkflowStatus`.
+1. **Connection guard** keeps all app restricted behind a wallet connection mandatory
+2. **Connect a wallet** via the Reown AppKit modal (Sepolia + local Hardhat networks) button on the homepage
+3. **New voting session** calls `VotingFactory.createVoting(name)`; you become its owner
+4. **Dashboard** lists every session from the factory's `VotingCreated` where connected wallet has a role (Admin or voter),
+   keeps the others "private"
+5. **Role guard** keeps a voting session private by restricting access uniquely to wallets having a role
+6. **Run the workflow** register voters, open proposals, vote, and tally, each step
+   gated by the contract's `WorkflowStatus`, each action not displayed or blocked if conditions not met
+7. **Independent display** keeps admin and voters actions commands displayed depending on wallet roles
 
 Contract ABIs/addresses consumed by the frontend live in `next-env/constants/`
 (`voting.ts`, `votingFactory.ts`) and are extracted from the Hardhat build artifacts.
@@ -195,8 +198,7 @@ Contract ABIs/addresses consumed by the frontend live in `next-env/constants/`
 ├── next-env/               # Next.js frontend
 │   ├── app/                # App Router pages & providers
 │   ├── components/         # UI (connection, deploy, layout, reusable)
-│   ├── constants/          # Contract ABIs + addresses
-│   └── utils/              # viem client & chain config
+│   └── constants/          # Contract ABIs + addresses
 └── .claude/                # Claude Code skills & slash commands for this repo
 ```
 
