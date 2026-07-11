@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { http } from "viem";
 import { createAppKit } from "@reown/appkit/react";
 import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
-import { sepolia, hardhat } from "@reown/appkit/networks";
+import { sepolia } from "@reown/appkit/networks";
 
 const projectId = process.env.NEXT_PUBLIC_PROJECT_ID || "";
 const RPC = process.env.NEXT_PUBLIC_INFURA_SEPOLIA || "";
@@ -18,19 +18,18 @@ const appUrl =
     : "http://localhost:3000");
 
 const wagmiAdapter = new WagmiAdapter({
-  networks: [sepolia, hardhat],
+  networks: [sepolia],
   projectId,
   ssr: true,
   transports: {
     [sepolia.id]: http(RPC),
-    [hardhat.id]: http("http://127.0.0.1:8545"),
   },
 });
 
 // Init AppKit once at module scope; its modal is a global web component on <body>.
 createAppKit({
   adapters: [wagmiAdapter],
-  networks: [sepolia, hardhat],
+  networks: [sepolia],
   projectId,
   metadata: {
     name: "Voting Platform",

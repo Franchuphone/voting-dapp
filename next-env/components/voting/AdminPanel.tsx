@@ -75,10 +75,10 @@ const AdminPanel = () => {
 
   const stepDescription = stepBlocked
     ? status === REGISTERING_PHASE
-      ? "Register at least one voter before opening proposals."
+      ? "Register at least one voter before opening proposals"
       : status === PROPOSALS_PHASE
-        ? "Register at least one proposal before closing."
-        : "At least one vote must be cast before closing."
+        ? "At least one proposal must be register before closing"
+        : "At least one vote must be cast before closing"
     : "Advance the session to its next phase.";
 
   return (
